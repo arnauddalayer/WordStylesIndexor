@@ -50,6 +50,12 @@ Cette création est mise à disposition selon le Contrat Paternité-NonCommercia
 
 # Changelog
 
+**2020-11-03**
+
+- Provider Jet remplacé par OLEDB, pour création d'une BD .accdb au lieu d'une BD .mdb
+
+- Ne pas créer la BD si ADOX n'est pas disponible (Office 365)
+
 **2013-10-28**
 
 - Ajout *go.bat*
