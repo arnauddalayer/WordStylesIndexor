@@ -1,7 +1,7 @@
 '===============================================
 'WORDSTYLESINDEXOR
 'Arnaud d'Alayer
-'Version : 20090923
+'Version : 20131028
 '
 'Cette création est mise à disposition selon le Contrat Paternité-NonCommercial-ShareAlike2.5 Canada disponible en ligne http://creativecommons.org/licenses/by-nc-sa/2.5/ca/ ou par courrier postal à Creative Commons, 559 Nathan Abbott Way, Stanford, California 94305, USA.
 '
@@ -50,7 +50,7 @@ For Each objFile in objFolder.Files
     strExtension = objFSO.GetExtensionName(strFilePath)
     
     'Si le fichier est un document Word, on lance l'extraction
-    If strExtension = "doc" Then
+    If strExtension = "doc" Or strExtension = "docx" Then
     
        'Parcours des styles
         for i = 0 to nombreStylesAIndexer
@@ -58,26 +58,27 @@ For Each objFile in objFolder.Files
             Set objDoc = objWord.Documents.Open(strFilePath)
             Set objSelection = objWord.Selection
             
+            objSelection.Find.ClearFormatting
             objSelection.Find.Forward = True
             objSelection.Find.Format = True
             objSelection.Find.Style = stylesAIndexer(i)
             
-            Do While True
-                objSelection.Find.Execute
+            While objSelection.Find.Execute
                 If objSelection.Find.Found Then
-                    'Suppression du caractère de retour chariot
-                    extraction = left(objSelection.Text, len(objSelection.Text)-1)
-                    'Suppression du caractère du saut de page (FF) http://fr.wikipedia.org/wiki/ASCII
+                    extraction = objSelection.Text
+                    'Suppression du caractère du saut de ligne (13) et du saut de page (FF) http://fr.wikipedia.org/wiki/ASCII
                     extraction = Replace(extraction, chr(12), "")
+                    extraction = Replace(extraction, chr(13), "")
                     'Vérifier si ce n'est pas une chaine vide
                     if len(extraction)>1 Then
                         rapport = rapport & j & separateur & objFile.Name & separateur & stylesAIndexer(i) & separateur & extraction & separateur & vbCrLf
+                        j = j + 1
                     end if
-                Else
-                    Exit Do
-                End If
-                j = j + 1
-            Loop
+                    'Correction documents Office 2010 : reprendre la recherche après le dernier résultat pour éviter une boucle sans fin
+                    objSelection.Start = objSelection.End + 1
+                    objSelection.End = objSelection.Start
+                end if
+            Wend
             
             objDoc.Close
         Next

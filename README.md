@@ -50,6 +50,15 @@ Cette création est mise à disposition selon le Contrat Paternité-NonCommercia
 
 # Changelog
 
+**2013-10-28**
+
+- Ajout *go.bat*
+
+**2012-11-11**
+
+* Compatible avec documents Office 2010
+* Ne fonctionne pas sur les systèmes 64 bits
+
 **2009-09-23**
 
 - Première version disponible
