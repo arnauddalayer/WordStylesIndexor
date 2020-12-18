@@ -1,7 +1,8 @@
 '===============================================
 'WORDSTYLESINDEXOR
+'https://github.com/arnauddalayer/WordStylesIndexor
 'Arnaud d'Alayer
-'Version : 20201103
+'Version : 20201218
 '
 'Cette création est mise à disposition selon le Contrat Paternité-NonCommercial-ShareAlike2.5 Canada disponible en ligne http://creativecommons.org/licenses/by-nc-sa/2.5/ca/ ou par courrier postal à Creative Commons, 559 Nathan Abbott Way, Stanford, California 94305, USA.
 '
@@ -53,34 +54,44 @@ For Each objFile in objFolder.Files
 	
 	'Si le fichier est un document Word, on lance l'extraction
 	If strExtension = "doc" Or strExtension = "docx" Then
-	
+		
+		WScript.Echo "Traitement du fichier " & objFile
+		
 		'Parcours des styles
 		for i = 0 to nombreStylesAIndexer
-			
+			WScript.Echo "    Traitement du style " & stylesAIndexer(i)
 			Set objDoc = objWord.Documents.Open(strFilePath)
 			Set objSelection = objWord.Selection
 			
 			objSelection.Find.ClearFormatting
 			objSelection.Find.Forward = True
 			objSelection.Find.Format = True
-			objSelection.Find.Style = stylesAIndexer(i)
 			
-			While objSelection.Find.Execute
-				If objSelection.Find.Found Then
-					extraction = objSelection.Text
-					'Suppression du caractère du saut de ligne (13) et du saut de page (FF) http://fr.wikipedia.org/wiki/ASCII
-					extraction = Replace(extraction, chr(12), "")
-					extraction = Replace(extraction, chr(13), "")
-					'Vérifier si ce n'est pas une chaine vide
-					if len(extraction)>1 Then
-						rapport = rapport & j & separateur & objFile.Name & separateur & stylesAIndexer(i) & separateur & extraction & separateur & vbCrLf
-						j = j + 1
+			'try/catch sur objSelection.Find.Style pour éviter erreur : "Microsoft Word: L'élément dont le nom est spécifié n'existe pas"
+			On Error Resume Next
+			Err.Clear
+			objSelection.Find.Style = stylesAIndexer(i)
+			If Err.Number <> 0 Then
+				WScript.Echo "        Erreur : Le style " & stylesAIndexer(i) & " n'existe pas"
+			Else
+				While objSelection.Find.Execute
+					If objSelection.Find.Found Then
+						extraction = objSelection.Text
+						'Suppression du caractère du saut de ligne (13) et du saut de page (FF) http://fr.wikipedia.org/wiki/ASCII
+						extraction = Replace(extraction, chr(12), "")
+						extraction = Replace(extraction, chr(13), "")
+						'Vérifier si ce n'est pas une chaine vide
+						if len(extraction)>1 Then
+							rapport = rapport & j & separateur & objFile.Name & separateur & stylesAIndexer(i) & separateur & extraction & separateur & vbCrLf
+							j = j + 1
+						end if
+						'Correction documents Office 2010 : reprendre la recherche après le dernier résultat pour éviter une boucle sans fin
+						objSelection.Start = objSelection.End + 1
+						objSelection.End = objSelection.Start
 					end if
-					'Correction documents Office 2010 : reprendre la recherche après le dernier résultat pour éviter une boucle sans fin
-					objSelection.Start = objSelection.End + 1
-					objSelection.End = objSelection.Start
-				end if
-			Wend
+				Wend
+			End if
+			On Error Goto 0
 			
 			objDoc.Close
 		Next
