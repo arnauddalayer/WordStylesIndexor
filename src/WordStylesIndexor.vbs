@@ -2,7 +2,7 @@
 'WORDSTYLESINDEXOR
 'https://github.com/arnauddalayer/WordStylesIndexor
 'Arnaud d'Alayer
-'Version : 20201218
+'Version : 20240929
 '
 'Cette création est mise à disposition selon le Contrat Paternité-NonCommercial-ShareAlike2.5 Canada disponible en ligne http://creativecommons.org/licenses/by-nc-sa/2.5/ca/ ou par courrier postal à Creative Commons, 559 Nathan Abbott Way, Stanford, California 94305, USA.
 '
@@ -24,6 +24,15 @@ dim repertoireCourant : repertoireCourant = objFSO.GetAbsolutePathName(".")
 csv = repertoireCourant & "\" & csv
 db = repertoireCourant & "\" &  db
 
+
+' Fonction pour afficher les messages uniquement avec cscript
+Dim executeEnCscript
+executeEnCscript = InStr(LCase(WScript.FullName), "cscript.exe") > 0
+Sub cscriptEcho(message)
+	If executeEnCscript Then
+		WScript.Echo message
+	End If
+End Sub
 
 
 '===============================================
@@ -55,11 +64,11 @@ For Each objFile in objFolder.Files
 	'Si le fichier est un document Word, on lance l'extraction
 	If strExtension = "doc" Or strExtension = "docx" Then
 		
-		WScript.Echo "Traitement du fichier " & objFile
+		cscriptEcho "Traitement du fichier " & objFile
 		
 		'Parcours des styles
 		for i = 0 to nombreStylesAIndexer
-			WScript.Echo "    Traitement du style " & stylesAIndexer(i)
+			cscriptEcho "    Traitement du style " & stylesAIndexer(i)
 			Set objDoc = objWord.Documents.Open(strFilePath)
 			Set objSelection = objWord.Selection
 			
@@ -72,7 +81,7 @@ For Each objFile in objFolder.Files
 			Err.Clear
 			objSelection.Find.Style = stylesAIndexer(i)
 			If Err.Number <> 0 Then
-				WScript.Echo "        Erreur : Le style " & stylesAIndexer(i) & " n'existe pas"
+				cscriptEcho "        Erreur : Le style " & stylesAIndexer(i) & " n'existe pas"
 			Else
 				While objSelection.Find.Execute
 					If objSelection.Find.Found Then
@@ -134,7 +143,7 @@ dim catalog : set catalog = createobject("adox.catalog")
 catalog.create connStr
 
 If Err.Number <> 0 Then
-	WScript.Echo "Impossible de creer une base de donnees Access. Veuillez installer Microsoft Access Database Engine 2016 Redistributable 32 bits (https://www.microsoft.com/en-us/download/details.aspx?id=54920) en mode /quiet"
+	WScript.Echo "Impossible de creer une base de donnees Access. Veuillez consulter la page https://learn.microsoft.com/en-us/office/troubleshoot/access/cannot-use-odbc-or-oledb pour determiner si vous devez installer Microsoft Access Database Engine 2016 Redistributable."
 	WScript.Quit
 end If
 On Error Goto 0
@@ -191,3 +200,5 @@ Loop
 
 objRecordSet.Close
 objConnection.Close
+
+WScript.Echo "Fin du traitement"
